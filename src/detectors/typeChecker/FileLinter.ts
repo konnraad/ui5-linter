@@ -31,10 +31,13 @@ export default class FileLinter {
 	}
 
 	// eslint-disable-next-line @typescript-eslint/require-await
-	async getReport(): Promise<LintResult> {
+	getReport(): LintResult {
 		try {
 			this.visitNode(this.#sourceFile);
-			return this.#reporter.getReport();
+			const report = this.#reporter.getReport();
+			this.#reporter.reset();
+			this.#sourceFile = undefined as unknown as ts.SourceFile;
+			return report;
 		} catch (err) {
 			if (err instanceof Error) {
 				throw new Error(`Failed to produce report for ${this.#filePath}: ${err.message}`, {

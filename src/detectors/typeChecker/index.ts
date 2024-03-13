@@ -160,8 +160,8 @@ export class TsProjectDetector extends ProjectBasedDetector {
 		// Read all resources and test-resources and their content since tsc works completely synchronous
 		const globEnd = taskStart("Locating Resources");
 		const fileTypes = "{*.js,*.view.xml,*.fragment.xml,manifest.json}";
-		const allResources = await reader.byGlob("/resources/**/" + fileTypes);
-		const allTestResources = await reader.byGlob("/test-resources/**/" + fileTypes);
+		let allResources = await reader.byGlob("/resources/**/" + fileTypes);
+		let allTestResources = await reader.byGlob("/test-resources/**/" + fileTypes);
 		globEnd();
 		const resources = new Map<string, string>();
 		const sourceMaps = new Map<string, string>();
@@ -222,9 +222,21 @@ export class TsProjectDetector extends ProjectBasedDetector {
 		}
 		resourcePaths.sort();
 
+		// Free memory
+		allResources = [];
+		allTestResources = [];
+
+		const createVirtualCompilerHostDone = taskStart("createVirtualCompilerHost");
 		const host = await createVirtualCompilerHost(this.compilerOptions, resources);
+		createVirtualCompilerHostDone();
+
+		const createProgramDone = taskStart("ts.createProgram");
 		const program = ts.createProgram(resourcePaths as string[], this.compilerOptions, host);
+		createProgramDone();
+
+		const getTypeCheckerDone = taskStart("getTypeChecker");
 		const checker = program.getTypeChecker();
+		getTypeCheckerDone();
 
 		const typeCheckDone = taskStart("Linting all transpiled resources");
 		for (const sourceFile of program.getSourceFiles()) {
@@ -234,11 +246,13 @@ export class TsProjectDetector extends ProjectBasedDetector {
 					throw new Error(`Failed to get FS path for ${sourceFile.fileName}`);
 				}
 				const linterDone = taskStart("Lint resource", filePath, true);
+				const sourceMap = sourceMaps.get(sourceFile.fileName);
+				sourceMaps.delete(sourceFile.fileName);
 				const linter = new FileLinter(
 					this.project.getRootPath(),
-					filePath, sourceFile, sourceMaps.get(sourceFile.fileName), checker, reportCoverage, messageDetails
+					filePath, sourceFile, sourceMap, checker, reportCoverage, messageDetails
 				);
-				const report = await linter.getReport();
+				const report = linter.getReport();
 				if (resourceMessages.has(sourceFile.fileName)) {
 					report.messages.push(...resourceMessages.get(sourceFile.fileName)!);
 					report.errorCount = report.messages
@@ -322,7 +336,7 @@ export class TsFileDetector extends FileBasedDetector {
 					this.rootDir, filePath, sourceFile,
 					sourceMaps.get(sourceFile.fileName), checker, reportCoverage, messageDetails
 				);
-				const report = await linter.getReport();
+				const report = linter.getReport();
 				if (resourceMessages.has(sourceFile.fileName)) {
 					report.messages.push(...resourceMessages.get(sourceFile.fileName)!);
 					report.errorCount = report.messages

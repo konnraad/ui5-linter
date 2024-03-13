@@ -200,4 +200,13 @@ export default class Reporter implements BaseReporter {
 			fatalErrorCount,
 		};
 	}
+
+	reset() {
+		this.#rootDir = "";
+		this.#filePath = "";
+		this.#sourceFile = undefined;
+		this.#traceMap = undefined;
+		this.#messages = [];
+		this.#coverageInfo = [];
+	}
 }

@@ -75,7 +75,13 @@ export async function createVirtualCompilerHost(
 		// NOTE: This function should be kept in sync with "fileExists"
 
 		if (files.has(fileName)) {
-			return files.get(fileName);
+			const content = files.get(fileName);
+			if (content === "REMOVED") {
+				console.error(`File ${fileName} was requested twice`);
+			} else {
+				files.set(fileName, "REMOVED");
+			}
+			return content;
 		}
 		if (fileName.startsWith("/types/")) {
 			const fsPath = mapToTypePath(fileName);

@@ -65,20 +65,20 @@ async function init() {
 }
 
 async function transpileXmlToJs(resourceName: string, contentStream: ReadStream): Promise<TranspileResult> {
-	const parser = new Parser(resourceName, apiExtract);
+	let parser: Parser | null = new Parser(resourceName, apiExtract);
 
 	// Initialize parser
 	const options = {highWaterMark: 32 * 1024}; // 32k chunks
-	const saxParser = new SAXParser(
+	let saxParser: SAXParser | null = new SAXParser(
 		SaxEventType.OpenTag | SaxEventType.CloseTag,
 		options);
 
 	saxParser.eventHandler = (event, tag) => {
 		if (tag instanceof SaxTag) {
 			if (event === SaxEventType.OpenTag) {
-				parser.pushTag(tag);
+				parser?.pushTag(tag);
 			} else if (event === SaxEventType.CloseTag) {
-				parser.popTag(tag);
+				parser?.popTag(tag);
 			}
 		}
 	};
@@ -91,7 +91,7 @@ async function transpileXmlToJs(resourceName: string, contentStream: ReadStream)
 	// stream from a file in the current directory
 	contentStream.on("data", (chunk: Uint8Array) => {
 		try {
-			saxParser.write(chunk);
+			saxParser?.write(chunk);
 		} catch (err) {
 			if (err instanceof Error) {
 				// In case of an error, destroy the content stream to make the
@@ -104,6 +104,9 @@ async function transpileXmlToJs(resourceName: string, contentStream: ReadStream)
 	});
 	await finished(contentStream);
 	saxParser.end();
+	saxParser = null;
 
-	return parser.generate();
+	const transpileResult = parser.generate();
+	parser = null;
+	return transpileResult;
 }
