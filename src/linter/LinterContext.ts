@@ -56,6 +56,7 @@ export interface LinterOptions {
 	rootDir: string;
 	namespace?: string;
 	pathsToLint?: FilePath[];
+	ignorePattern?: string[];
 	reportCoverage?: boolean;
 	includeMessageDetails?: boolean;
 }
