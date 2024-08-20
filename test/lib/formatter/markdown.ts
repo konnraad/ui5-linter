@@ -79,7 +79,7 @@ test("Test Markdown Formatter with multiple files and message types", (t) => {
 			coverageInfo: [],
 			errorCount: 1,
 			fatalErrorCount: 0,
-			warningCount: 1,
+			warningCount: 2,
 		},
 		{
 			filePath: "",
@@ -87,8 +87,38 @@ test("Test Markdown Formatter with multiple files and message types", (t) => {
 				{
 					ruleId: "rule3",
 					severity: LintMessageSeverity.Error,
-					line: 3,
+					line: 11,
 					column: 3,
+					message: "Another error message",
+				},
+				{
+					ruleId: "rule3",
+					severity: LintMessageSeverity.Error,
+					line: 3,
+					column: 6,
+					message: "Another error message",
+					fatal: true,
+				},
+				{
+					ruleId: "rule3",
+					severity: LintMessageSeverity.Error,
+					line: 12,
+					column: 3,
+					message: "Another error message",
+					fatal: true,
+				},
+				{
+					ruleId: "rule3",
+					severity: LintMessageSeverity.Warning,
+					line: 12,
+					column: 3,
+					message: "Another error message",
+				},
+				{
+					ruleId: "rule3",
+					severity: LintMessageSeverity.Error,
+					line: 11,
+					column: 2,
 					message: "Another error message",
 				},
 			],
@@ -102,16 +132,5 @@ test("Test Markdown Formatter with multiple files and message types", (t) => {
 	const markdownFormatter = new Markdown();
 	const markdownResult = markdownFormatter.format(lintResults, false);
 
-	t.true(markdownResult.includes("🔴 [1:1] Error message"),
-		"The Markdown output includes the error message for file1");
-	t.true(markdownResult.includes("🟡 [2:2] Warning message"),
-		"The Markdown output includes the warning message for file1");
-	t.true(markdownResult.includes("🔴 [3:3] Another error message"),
-		"The Markdown output includes the error message for file2");
-	t.true(markdownResult.includes("- Total problems: 3"),
-		"The Markdown output includes the correct total problem count");
-	t.true(markdownResult.includes("  - Errors: 2"),
-		"The Markdown output includes the correct error count");
-	t.true(markdownResult.includes("  - Warnings: 1"),
-		"The Markdown output includes the correct warning count");
+	t.snapshot(markdownResult);
 });
