@@ -38,7 +38,7 @@ export class Markdown {
 				}
 			});
 
-			// Sort messages by severity (sorting order: fatal-errors, errors, warnings)
+			// Sort messages by severity  (sorting order: fatal-errors, errors, warnings)
 			messages.sort((a, b) => {
 				// Handle fatal errors first to push them to the bottom
 				if (a.fatal !== b.fatal) {
