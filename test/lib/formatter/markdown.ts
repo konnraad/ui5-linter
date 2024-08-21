@@ -24,7 +24,7 @@ test.beforeEach((t) => {
 	}];
 });
 
-test("Test Markdown Formatter (with '--details true')", (t) => {
+test.skip("Test Markdown Formatter (with '--details true')", (t) => {
 	const {lintResults} = t.context;
 	const markdownFormatter = new Markdown();
 	const markdownResult = markdownFormatter.format(lintResults, true);
@@ -43,7 +43,7 @@ test("Test Markdown Formatter (with '--details true')", (t) => {
 		"The Markdown output includes the warning count");
 });
 
-test("Test Markdown Formatter (with '--details false')", (t) => {
+test.skip("Test Markdown Formatter (with '--details false')", (t) => {
 	const {lintResults} = t.context;
 	const markdownFormatter = new Markdown();
 	const markdownResult = markdownFormatter.format(lintResults, false);

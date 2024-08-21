@@ -1,4 +1,3 @@
-import path from "node:path";
 import {LintMessageSeverity, LintResult, LintMessage} from "../linter/LinterContext.js";
 
 export class Markdown {
@@ -20,8 +19,14 @@ export class Markdown {
 			totalFatalErrorCount += fatalErrorCount;
 
 			// Add the file path as a section header
-			output += `#### ${path.resolve(process.cwd(), filePath)}\n\n`;
-
+			output += `#### ${(process.cwd(), filePath)}\n\n`;
+			if (showDetails === true) {
+				output += `| Severity | Line | Message | Details |\n`;
+				output += `|----------|------|---------|---------|\n`;
+			} else {
+				output += `| Severity | Line | Message |\n`;
+				output += `|----------|------|---------|\n`;
+			}
 			// Group messages by rule for easier reading
 			const rules = new Map<string, LintMessage[]>();
 			messages.forEach((msg) => {
@@ -33,15 +38,15 @@ export class Markdown {
 				}
 			});
 
-			// Sort messages by line, then by column (falling back to 0 if undefined)
+			// Sort messages by severity (sorting order: fatal-errors, errors, warnings)
 			messages.sort((a, b) => {
 				// Handle fatal errors first to push them to the bottom
 				if (a.fatal !== b.fatal) {
-					return a.fatal ? 1 : -1; // Fatal errors go to the bottom
+					return a.fatal ? -1 : 1; // Fatal errors go to the top
 				}
 				// First, compare by severity
 				if (a.severity !== b.severity) {
-					return a.severity - b.severity;
+					return b.severity - a.severity;
 				}
 				// If severity is the same, compare by line number (handling nulls)
 				if ((a.line ?? 0) !== (b.line ?? 0)) {
@@ -57,7 +62,7 @@ export class Markdown {
 				const location = this.formatLocation(msg.line, msg.column);
 				const details = this.formatMessageDetails(msg, showDetails);
 
-				output += `- ${severity} ${location} ${msg.fatal ? " Fatal error: " : ""}${msg.message}${details}\n`;
+				output += `|${severity} | \`${location}\` |${msg.message}|${details}|\n`;
 			});
 
 			output += "\n";
@@ -68,10 +73,10 @@ export class Markdown {
 		output += `  - Total problems: ${totalErrorCount + totalWarningCount}\n `;
 
 		// Include fatal errors count if any
-		output += `  - Warnings: ${totalWarningCount}\n `;
-		output += `  - Errors: ${totalErrorCount}\n`;
+		output += ` - Warnings: ${totalWarningCount}\n `;
+		output += ` - Errors: ${totalErrorCount}\n`;
 		if (totalFatalErrorCount) {
-			output += `- Fatal errors:${totalFatalErrorCount}\n`;
+			output += `  - Fatal errors:${totalFatalErrorCount}\n`;
 		}
 
 		// Suggest using the details option if not all details are shown
@@ -84,11 +89,11 @@ export class Markdown {
 	// Formats the severity of the lint message using appropriate emoji
 	private formatSeverity(severity: LintMessageSeverity, fatal: LintMessage["fatal"]): string {
 		if (fatal === true) {
-			return "🔥";
+			return " Fatal Error";
 		} else if (severity === LintMessageSeverity.Warning) {
-			return "🟡";
+			return " Warning";
 		} else if (severity === LintMessageSeverity.Error) {
-			return "🔴";
+			return " Error";
 		} else {
 			throw new Error(`Unknown severity: ${LintMessageSeverity[severity]}`);
 		}
@@ -106,6 +111,6 @@ export class Markdown {
 			return "";
 		}
 		// Replace multiple spaces or newlines with a single space for clean output
-		return `\n  - **Details:** ${msg.messageDetails.replace(/\s\s+|\n/g, " ")}`;
+		return `${msg.messageDetails.replace(/\s\s+|\n/g, " ")}`;
 	}
 }
